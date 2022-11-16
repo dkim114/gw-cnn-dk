@@ -121,3 +121,24 @@ class Dense(Layer):
         if self.add_bias:
             self.bias -= learning_rate * output_error
         return input_error
+
+class Flatten(Layer):
+
+    def __init__(self, input_size=None):
+        super().__init__(None)
+        self.name = "Flatten"
+        self.input_size = input_size
+        self.output_size = (input_size[0]**2)
+
+    def init_weights(self, input_size):
+        pass
+
+    def forward_propagation(self, input):
+        self.before_flattened_shape = input.shape
+        flattened = input.reshape(1, input.shape[0]**2)
+        return flattened
+
+    def backward_propagation(self, input, learning_rate):
+        before_flattened = input.reshape(self.before_flattened_shape)
+        return before_flattened
+    
