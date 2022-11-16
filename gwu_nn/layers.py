@@ -128,14 +128,14 @@ class Flatten(Layer):
         super().__init__(None)
         self.name = "Flatten"
         self.input_size = input_size
-        self.output_size = (input_size[0]**2)
+        self.output_size = (input_size[1]**2)
 
     def init_weights(self, input_size):
         pass
 
     def forward_propagation(self, input):
         self.before_flattened_shape = input.shape
-        flattened = input.reshape(1, input.shape[0]**2)
+        flattened = np.array([input.flatten()])
         return flattened
 
     def backward_propagation(self, input, learning_rate):
