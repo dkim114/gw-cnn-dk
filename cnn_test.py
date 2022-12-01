@@ -24,6 +24,13 @@ print(np.array([x_train.flatten()]).shape)
 
 #network.fit(x_train, y_train, epochs=100, batch_size=20)
 
+
+# First Layer: Conv2D(num_filters, kernel_size, activation, input_shape)
+# Second Layer: MaxPooling2D(pool_size)
+# Third Conv2D Layer: Conv2D(num_filters, kernel_size, activation)
+# Fourth Layer: MaxPooling2D(pool_size)
+# Fifth Layer: Flatten()
+
 # Test Code for Flatten Layer
 #test_flat = np.array([[1,2,3,4],
 #                    [5,6,7,8],

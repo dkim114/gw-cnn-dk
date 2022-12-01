@@ -134,6 +134,7 @@ class Flatten(Layer):
         pass
 
     def forward_propagation(self, input):
+        # Flattens into [1, -1] size array
         self.before_flattened_shape = input.shape
         flattened = np.array([input.flatten()])
         return flattened
@@ -141,4 +142,23 @@ class Flatten(Layer):
     def backward_propagation(self, input, learning_rate):
         before_flattened = input.reshape(self.before_flattened_shape)
         return before_flattened
-    
+
+class Conv2D(Layer):
+
+    def __init__(self, num_filters=2, kernel_size=None, activation=None, input_shape=None):
+        super().__init__(None)
+        self.name = "Conv2D"
+        self.num_filters = num_filters
+        self.kernel_size = kernel_size
+        self.input_shape = input_shape
+
+    def init_weights(self, input_size):
+        self.kernels = np.random.randn(self.kernel_size, self.kernel_size) / np.sqrt(2 * self.kernel_size)
+
+    def forward_propagation(self, input):
+        pass
+
+    def backward_propagation(self, input, learning_rate):
+        pass
+
+
