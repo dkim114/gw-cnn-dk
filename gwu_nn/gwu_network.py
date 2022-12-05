@@ -90,14 +90,14 @@ class GWUNetwork():
         for i in range(epochs):
             err = 0
             batch_count = 0
-            for j in range(0, len(x_train), batch_size):
+            for j in range(len(x_train)):
                 # forward propagation
-                output = x_train[j:j+batch_size]
+                output = x_train[j]
                 for layer in self.layers:
                     output = layer.forward_propagation(output)
 
                 # compute loss (for display purpose only)
-                y_true = y_train[j:j+batch_size]
+                y_true = y_train[j]
                 err += self.loss(y_true, output)
                 batch_count += 1
 

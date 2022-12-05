@@ -4,6 +4,8 @@ from gwu_nn.activation_layers import Sigmoid, RELU, Softmax
 
 activation_functions = {'relu': RELU, 'sigmoid': Sigmoid, 'softmax': Softmax}
 
+import matplotlib.pyplot as plt
+
 
 def apply_activation_forward(forward_pass):
     """Decorator that ensures that a layer's activation function is applied after the layer during forward
@@ -135,28 +137,55 @@ class Flatten(Layer):
 
     def forward_propagation(self, input):
         # Flattens into [1, -1] size array
+        print(input.shape)
         self.before_flattened_shape = input.shape
         flattened = np.array([input.flatten()])
+        print(flattened.shape)
         return flattened
 
     def backward_propagation(self, input, learning_rate):
+        print(input)
         before_flattened = input.reshape(self.before_flattened_shape)
+        print(before_flattened.shape)
         return before_flattened
 
 class Conv2D(Layer):
 
-    def __init__(self, num_filters=2, kernel_size=None, activation=None, input_shape=None):
+    def __init__(self, input_size=None, kernel_size=None, activation=None, num_filters=2):
         super().__init__(None)
         self.name = "Conv2D"
-        self.num_filters = num_filters
+        self.input_size = input_size
         self.kernel_size = kernel_size
-        self.input_shape = input_shape
+        self.output_size = (((input_size - kernel_size) + 1), ((input_size - kernel_size) + 1))
+        self.num_filters = num_filters
 
     def init_weights(self, input_size):
-        self.kernels = np.random.randn(self.kernel_size, self.kernel_size) / np.sqrt(2 * self.kernel_size)
+        # Initialize weights of kernel of size (kernel_size, kernel_size)
+        filter_size = (self.num_filters, self.kernel_size, self.kernel_size)
+        self.filters = np.random.normal(loc = 0, scale = (1 / np.sqrt(np.prod(filter_size))), size = filter_size)
 
+    @apply_activation_forward
     def forward_propagation(self, input):
-        pass
+
+        print(input.shape)
+        # .shape Prints (28, 28, 1)
+        self.input = input
+        currentKernelSize = self.kernel_size
+        currentFilters = self.filters
+
+        convRow = (self.input_size - currentKernelSize) + 1 # Number of rows after convolved
+        convColumn = (self.input_size - currentKernelSize) + 1 # Number of columns after convolved
+        
+        output = np.zeros((self.num_filters, convRow, convColumn))
+
+        for i in range (self.num_filters):
+            for x in range(convRow):
+                for y in range (convColumn):
+                    for z in range(self.kernel_size):
+                        for v in range (self.kernel_size):
+                            output[i, x, y] += input[x + z, y + v] * currentFilters[i, z, v]
+        
+        return output
 
     def backward_propagation(self, input, learning_rate):
         pass
