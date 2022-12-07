@@ -136,11 +136,13 @@ class Flatten(Layer):
         pass
 
     def forward_propagation(self, input):
+
+        #print("Flatten Input Shape: " + str(input.shape))
         # Flattens into [1, -1] size array
         self.before_flattened_shape = input.shape
-        flattened = np.array([input.flatten()])
-        print(flattened.shape)
-        return flattened
+        output = np.array([input.flatten()])
+        #print("Flatten Output Shape: " + str(output.shape))
+        return output
 
     def backward_propagation(self, input, learning_rate):
         before_flattened = input.reshape(self.before_flattened_shape)
@@ -160,10 +162,12 @@ class Conv2D(Layer):
         # Initialize weights of kernel of size (kernel_size, kernel_size)
         filter_size = (self.num_filters, self.kernel_size, self.kernel_size)
         self.filters = np.random.normal(loc = 0, scale = (1 / np.sqrt(np.prod(filter_size))), size = filter_size)
-
+        #print(self.filters)
     @apply_activation_forward
     def forward_propagation(self, input):
 
+        #print("Conv2D Input Shape: " + str(input.shape))
+        
         self.input = input
         currentKernelSize = self.kernel_size
         currentFilters = self.filters
@@ -179,6 +183,8 @@ class Conv2D(Layer):
                     for z in range(self.kernel_size):
                         for v in range (self.kernel_size):
                             output[i, x, y] += input[x + z, y + v] * currentFilters[i, z, v]
+        
+        #print("Conv2D Output Shape: " + str(output.shape))
         return output
 
     @apply_activation_backward
@@ -201,13 +207,19 @@ class MaxPooling2D(Layer):
     @apply_activation_forward
     def forward_propagation(self, input):
 
-        print(input.shape)
-        print(input[0])
+        #print("MaxPooling2D Input Shape: " + str(input.shape))
         num_filters = input.shape[0]
         tempOutputSize = self.output_size
         output = np.zeros((num_filters, self.output_size, self.output_size))
         
-  
+        for i in range (0, num_filters):
+            for x in range (0, tempOutputSize):
+                for y in range (0, tempOutputSize):
+                    tempArray = input[i, x*self.strides:(x*self.strides)+self.pool_size, y*self.strides:(y*self.strides)+self.pool_size]
+                    output[i, x, y] = np.max(tempArray)
+
+
+        print("MaxPooling2D Output Shape: " + str(output.shape))
         return output
 
     @apply_activation_backward

@@ -61,13 +61,17 @@ class GWUNetwork():
         Returns:
             np.array: the predictions for the given model
         """
-        
+        predict_results = []
+        num_images = len(input_data)
         # Run through the layers
         output = input_data
-        for layer in self.layers:
-            output = layer.forward_propagation(output)
+        for i in range (num_images):
+            output = input_data[i]
+            for layer in self.layers:
+                output = layer.forward_propagation(output)
+            predict_results.append(output)
 
-        return output
+        return predict_results
 
     def evaluate(self, x, y):
         preds = self.predict(x)
