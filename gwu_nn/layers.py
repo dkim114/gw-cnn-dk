@@ -130,23 +130,20 @@ class Flatten(Layer):
         super().__init__(None)
         self.name = "Flatten"
         self.input_size = input_size
-        self.output_size = (input_size[1]**2)
+        self.output_size = (2*(input_size[1]**2)) #Temporary 
 
     def init_weights(self, input_size):
         pass
 
     def forward_propagation(self, input):
         # Flattens into [1, -1] size array
-        print(input.shape)
         self.before_flattened_shape = input.shape
         flattened = np.array([input.flatten()])
         print(flattened.shape)
         return flattened
 
     def backward_propagation(self, input, learning_rate):
-        print(input)
         before_flattened = input.reshape(self.before_flattened_shape)
-        print(before_flattened.shape)
         return before_flattened
 
 class Conv2D(Layer):
@@ -167,8 +164,6 @@ class Conv2D(Layer):
     @apply_activation_forward
     def forward_propagation(self, input):
 
-        print(input.shape)
-        # .shape Prints (28, 28, 1)
         self.input = input
         currentKernelSize = self.kernel_size
         currentFilters = self.filters
@@ -184,10 +179,39 @@ class Conv2D(Layer):
                     for z in range(self.kernel_size):
                         for v in range (self.kernel_size):
                             output[i, x, y] += input[x + z, y + v] * currentFilters[i, z, v]
-        
         return output
 
+    @apply_activation_backward
     def backward_propagation(self, input, learning_rate):
         pass
+
+class MaxPooling2D(Layer):
+
+    def __init__(self, pool_size=2, strides=2, activation=None, input_size=None):
+        super().__init__(None)
+        self.name = "MaxPooling2D"
+        self.input_size = input_size
+        self.pool_size = pool_size
+        self.strides = strides
+        self.output_size = (int((self.input_size - self.pool_size) / self.strides) + 1)
+
+    def init_weights(self, input_size):
+        pass
+
+    @apply_activation_forward
+    def forward_propagation(self, input):
+
+        print(input.shape)
+        print(input[0])
+        num_filters = input.shape[0]
+        tempOutputSize = self.output_size
+        output = np.zeros((num_filters, self.output_size, self.output_size))
+        
+  
+        return output
+
+    @apply_activation_backward
+    def backward_propagation(self, input, learning_rate):
+        return input
 
 

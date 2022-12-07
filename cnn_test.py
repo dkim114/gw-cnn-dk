@@ -1,31 +1,29 @@
 import gwu_nn
 from gwu_nn.activation_layers import Sigmoid
 from gwu_nn.gwu_network import GWUNetwork
-from gwu_nn.layers import Dense, Flatten, Conv2D
+from gwu_nn.layers import Dense, Flatten, Conv2D, MaxPooling2D
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from keras.datasets import mnist
- 
-(x_train, y_train), (x_test, y_test) = mnist.load_data()
-x_train = x_train / 255
-x_test = x_test / 255
-
-print(x_train.shape)
-print(y_train.shape)
+from tensorflow.keras.datasets import fashion_mnist 
+(x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
 x_train = x_train.reshape(x_train.shape[0], 28, 28, 1).astype('float32')
 x_train = x_train[:1]
 y_train = y_train[:1]
 print(x_train.shape)
 print(y_train.shape)
-
+print(y_train)
 
 network = GWUNetwork()
-#network.add(Dense(output_size=16, input_size=5))
 network.add(Conv2D(input_size=28, kernel_size=5))
-network.add(Flatten(input_size=(24,24)))
+# Max Pooling
+# Conv2D
+# Max Pooling
+network.add(MaxPooling2D(pool_size=2, strides=2, input_size=26))
+#network.add(Flatten(input_size=(24,24)))
+#network.add(Dense(1, activation='relu', input_size=1152))
 #network.add(Sigmoid())
 network.compile(loss='log_loss', lr=0.01)
 print(network)
