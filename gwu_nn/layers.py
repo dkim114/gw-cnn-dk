@@ -5,7 +5,8 @@ from gwu_nn.activation_layers import Sigmoid, RELU, Softmax
 activation_functions = {'relu': RELU, 'sigmoid': Sigmoid, 'softmax': Softmax}
 
 import matplotlib.pyplot as plt
-
+from numpy import unravel_index
+from scipy.signal import convolve2d
 
 def apply_activation_forward(forward_pass):
     """Decorator that ensures that a layer's activation function is applied after the layer during forward
@@ -100,11 +101,12 @@ class Dense(Layer):
             np.array(float): The dot product of the input and the layer's weight tensor."""
         self.input = input
         output = np.dot(input, self.weights)
+
         if self.add_bias:
             return output + self.bias
         else:
             return output
-
+        
     @apply_activation_backward
     def backward_propagation(self, output_error, learning_rate):
         """Applies the backward propagation for a densely connected layer. This will calculate the output error
@@ -122,78 +124,72 @@ class Dense(Layer):
         self.weights -= learning_rate * weights_error
         if self.add_bias:
             self.bias -= learning_rate * output_error
+        
         return input_error
-
-class Flatten(Layer):
-
-    def __init__(self, input_size=None):
-        super().__init__(None)
-        self.name = "Flatten"
-        self.input_size = input_size
-        self.output_size = (2*(input_size[1]**2)) #Temporary 
-
-    def init_weights(self, input_size):
-        pass
-
-    def forward_propagation(self, input):
-
-        #print("Flatten Input Shape: " + str(input.shape))
-        # Flattens into [1, -1] size array
-        self.before_flattened_shape = input.shape
-        output = np.array([input.flatten()])
-        #print("Flatten Output Shape: " + str(output.shape))
-        return output
-
-    def backward_propagation(self, input, learning_rate):
-        before_flattened = input.reshape(self.before_flattened_shape)
-        return before_flattened
 
 class Conv2D(Layer):
 
-    def __init__(self, input_size=None, kernel_size=None, activation=None, num_filters=2):
+    def __init__(self, input_size=None, kernel_size=None, activation=None, depth=2):
         super().__init__(None)
         self.name = "Conv2D"
         self.input_size = input_size
+        self.input_shape = (self.input_size, self.input_size, 1)
         self.kernel_size = kernel_size
         self.output_size = (((input_size - kernel_size) + 1), ((input_size - kernel_size) + 1))
-        self.num_filters = num_filters
+        self.depth = depth
 
     def init_weights(self, input_size):
         # Initialize weights of kernel of size (kernel_size, kernel_size)
-        filter_size = (self.num_filters, self.kernel_size, self.kernel_size)
-        self.filters = np.random.normal(loc = 0, scale = (1 / np.sqrt(np.prod(filter_size))), size = filter_size)
-        #print(self.filters)
+        self.kernel_shape = (self.depth, self.kernel_size, self.kernel_size)
+        self.kernel = np.random.randn(self.depth, self.kernel_size, self.kernel_size)
+    
     @apply_activation_forward
     def forward_propagation(self, input):
 
         #print("Conv2D Input Shape: " + str(input.shape))
-        
         self.input = input
         currentKernelSize = self.kernel_size
-        currentFilters = self.filters
 
         convRow = (self.input_size - currentKernelSize) + 1 # Number of rows after convolved
         convColumn = (self.input_size - currentKernelSize) + 1 # Number of columns after convolved
-        
-        output = np.zeros((self.num_filters, convRow, convColumn))
+        self.convolve_size = convRow
 
-        for i in range (self.num_filters):
-            for x in range(convRow):
-                for y in range (convColumn):
-                    for z in range(self.kernel_size):
-                        for v in range (self.kernel_size):
-                            output[i, x, y] += input[x + z, y + v] * currentFilters[i, z, v]
-        
+        output = np.zeros((self.depth, convRow, convColumn))
+
+        for i in range (0, self.depth):
+            for x in range(0, convRow):
+                for y in range (0, convColumn):
+                    for z in range(0, self.kernel_size):
+                        for v in range (0, self.kernel_size):
+                            output[i, x, y] += input[x + z, y + v] * self.kernel[i, z, v]
         #print("Conv2D Output Shape: " + str(output.shape))
         return output
 
     @apply_activation_backward
-    def backward_propagation(self, input, learning_rate):
-        pass
+    def backward_propagation(self, output_error, learning_rate):
+        #print("Original Filter: \n" + str(self.filters))
+        
+        kernel_gradient = np.zeros(self.kernel_shape) # (2, 3, 3)
+        input_gradient = np.zeros(self.input.shape)
+
+        # Convolution
+        for i in range (0, self.depth):
+            # Note: Need to implement convolution between output_error and kernel
+            # Note: scipy convole2d is temporary
+            input_gradient += convolve2d(output_error[i], self.kernel[i])
+            for x in range (0, self.kernel_size):
+                for y in range (0, self.kernel_size):
+                    for z in range (0, self.convolve_size):
+                        for v in range (0, self.convolve_size):
+                            kernel_gradient[i, x, y] += self.input[x + z, y + v] * output_error[i, z, v]
+
+        # Update Filters with Learning Rate
+        self.kernel -= np.array(kernel_gradient) * learning_rate
+        return input_gradient
 
 class MaxPooling2D(Layer):
 
-    def __init__(self, pool_size=2, strides=2, activation=None, input_size=None):
+    def __init__(self, pool_size=2, strides=1, activation=None, input_size=None):
         super().__init__(None)
         self.name = "MaxPooling2D"
         self.input_size = input_size
@@ -206,24 +202,62 @@ class MaxPooling2D(Layer):
 
     @apply_activation_forward
     def forward_propagation(self, input):
-
+        self.input = input
+        self.input_shape = input.shape
         #print("MaxPooling2D Input Shape: " + str(input.shape))
-        num_filters = input.shape[0]
+        self.num_filters = input.shape[0]
         tempOutputSize = self.output_size
-        output = np.zeros((num_filters, self.output_size, self.output_size))
+        output = np.zeros((self.num_filters, self.output_size, self.output_size))
         
-        for i in range (0, num_filters):
+        for i in range (0, self.num_filters):
             for x in range (0, tempOutputSize):
                 for y in range (0, tempOutputSize):
                     tempArray = input[i, x*self.strides:(x*self.strides)+self.pool_size, y*self.strides:(y*self.strides)+self.pool_size]
                     output[i, x, y] = np.max(tempArray)
 
-
-        print("MaxPooling2D Output Shape: " + str(output.shape))
+        #print("MaxPooling2D Output Shape: " + str(output.shape))
         return output
 
     @apply_activation_backward
-    def backward_propagation(self, input, learning_rate):
-        return input
+    def backward_propagation(self, output_error, learning_rate):
+        
+        input_gradient = np.zeros(self.input_shape)
+        
+        for i in range (0, self.num_filters):
+            y_coord = 0
+            for x in range (0, self.output_size):
+                x_coord = 0
+                for y in range (0, self.output_size):
+                    input_sub = self.input[i, x*self.strides:(x*self.strides)+self.pool_size, y*self.strides:(y*self.strides)+self.pool_size]
+                    max = np.max(input_sub)
+                    result = unravel_index(input_sub.argmax(), input_sub.shape)
+                    max_x = result[0]
+                    max_y = result[1]
+                    input_gradient[i, x*self.strides:(x*self.strides)+self.pool_size, y*self.strides:(y*self.strides)+self.pool_size][max_x, max_y] = max
+        
+        return input_gradient
 
+class Flatten(Layer):
+
+    def __init__(self, input_size=None):
+        super().__init__(None)
+        self.name = "Flatten"
+        self.input_size = input_size
+        self.output_size = (2*((input_size[1]**2))) #Temporary 
+
+    def init_weights(self, input_size):
+        pass
+
+    def forward_propagation(self, input):
+
+        #print("Flatten Input Shape: " + str(input.shape))
+
+        self.before_flattened_shape = input.shape
+        output = np.array([input.flatten()])
+
+        return output
+
+    def backward_propagation(self, output_error, learning_rate):
+        before_flattened = output_error.reshape(self.before_flattened_shape)
+        return before_flattened
 

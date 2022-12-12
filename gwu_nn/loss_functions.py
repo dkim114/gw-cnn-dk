@@ -72,7 +72,7 @@ class LogLoss(LossFunction):
         Returns:
             np.array: LogLoss for each input
         """
-        return np.mean(-np.log(y_pred)*y_true + -np.log(1-y_pred)*(1-y_true))
+        return -np.mean(np.log(y_pred)*y_true + np.log(1-y_pred)*(1-y_true))
 
     @classmethod
     def loss_partial_derivative(cls, y_true, y_pred):
@@ -105,6 +105,8 @@ class CrossEntropy(LossFunction):
         """
         m = y_true.shape[0]
         grad = SoftmaxActivation.activation(y_pred)
-        grad[range(m), y_true] -= 1
+        for i in range (0, m):
+            grad[0][i] = y_true[i] - 1
+        #grad[range(m), y_true] -= 1
         grad = grad / m
         return grad

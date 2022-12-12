@@ -106,7 +106,8 @@ class SoftmaxActivation(ActivationFunction):
             np.array(floats): Softmax(x)
         """
         exps = np.exp(x - np.max(x))
-        return exps / np.sum(exps)
+        output = exps / np.sum(exps)
+        return output
 
     # TODO: Fix partial div implementation of softmax
     @classmethod

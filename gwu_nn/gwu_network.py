@@ -1,6 +1,9 @@
 import numpy as np
 from gwu_nn.loss_functions import MSE, LogLoss, CrossEntropy
 
+import matplotlib.pyplot as plt
+
+
 loss_functions = {'mse': MSE, 'log_loss': LogLoss, 'cross_entropy': CrossEntropy}
 
 class GWUNetwork():
@@ -101,17 +104,19 @@ class GWUNetwork():
                     output = layer.forward_propagation(output)
 
                 # compute loss (for display purpose only)
-                y_true = y_train[j]
+                y_true = np.array(y_train[j])
                 err += self.loss(y_true, output)
+                #print("y_true: " + str(y_true))
+                #print("output: " + str(output))
                 batch_count += 1
 
                 # backward propagation
                 error = self.loss_prime(y_true, output)
                 for layer in reversed(self.layers):
                     error = layer.backward_propagation(error, self.learning_rate)
-
             # calculate average error on all samples
-            if i % 10 == 0 and i != 0:
+            #if i % 10 == 0 and i != 0:
+            if i != 0:
                 err /= batch_count
                 print(f'epoch {i}/{epochs}   error={err}')
                 
